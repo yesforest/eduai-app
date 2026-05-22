@@ -1,114 +1,103 @@
-import streamlit as st
 import random
+import streamlit as st
+import streamlit.components.v1 as components
 
-st.set_page_config(page_title="EduAI Ultra Global Scheduler", page_icon="🌍", layout="wide")
+# 1. SƏHİFƏ KONFİQURASİYASI (Mütləq ən birinci gəlməlidir)
+st.set_page_config(page_title="EduAI Ultra Global Scheduler", page_icon="🤖", layout="wide")
 
-# 🌐 SÜNİ İNTELLEKTÜAL QLOVAL TƏRCÜMƏ SİSTEMİ
-st.markdown(
-    """
-    <div style="text-align: right; padding: 10px;">
-        <div id="google_translate_element"></div>
-    </div>
-    <script type="text/javascript">
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'az',
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-            }, 'google_translate_element');
-        }
-    </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-    """,
-    unsafe_allow_html=True
-)
+# 2. SÜNİ İNTELLEKT QLOVAL TƏRCÜMƏ SİSTEMİ (Google Translate)
+html_kodu = """
+<div style="text-align: right; padding: 10px;">
+    <div id="google_translate_element"></div>
+</div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'az', 
+    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+  }, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+"""
 
+# Tərcümə düyməsini ekrana buraxırıq
+components.html(html_kodu, height=60, scrolling=False)
+
+
+# 3. SƏHİFƏNİN ƏSAS BAŞLIQLARI
 st.title("🤖 EduAI Ağıllı Tədris Asistanı / Smart Study Assistant")
-st.write("Dinamik planlaşdırma, mövzu tövsiyələri və motivasiya bir arada! / Dynamic scheduling and motivation!")
+st.subheader("Dinamik planlaşdırma, mövzu tövsiyələri və motivasiya bir arada! 🚀")
 
-# Motivasiya sözləri
-motivations = [
-    "Uğur, hər gün təkrarlanan kiçik səylərin cəmidir! ✨",
-    "Kompüter yavaş ola bilər, amma sənin hədəflərin sürətlidir! 💻🚀",
-    "Bu gün qoyduğun hər kərpic, sabah quracağın gələcəyin təməlidir. 💪",
-    "Böyük hədəflər, böyük səbirlər tələb edir. Sən bunu bacaracaqsan! 🎯"
+st.write("---")
+
+# 4. DATA VƏ MƏNTİQ SİSTEMİ (Sənin kodunun ardı)
+
+# Motivasiya sözləri bazası
+motivasiya_sozleri = [
+    "Uğur, hər gün təkrarlanan kiçik səylərin cəmidir! 💪",
+    "Başlamaq üçün mükəmməl olmaq məcburiyyətində deyilsən, amma mükəmməl olmaq üçün başlamalısan! ✨",
+    "Dahilik 1% istedad, 99% tərləməkdir. – Tomas Edison 💡",
+    "Bu gün atdığın kiçik bir addım, sabahkı böyük uğurunun təməlidir! 🔥",
+    "Çətinliklər səni qorxutmasın, onlar səni daha da gücləndirir! 🌟"
 ]
 
-# 💰 SOL PANEL: BİZNES VƏ AYARLAR HİSSƏSİ
-st.sidebar.header("⚙️ Tənzimləmələr / Settings")
-total_days = st.sidebar.slider("İmtahana neçə gün qalıb? / Days left?", 1, 60, 15)
-daily_hours = st.sidebar.slider("Günlük dərs saatın? / Daily hours?", 1, 12, 4)
+# Mövzular üzrə tövsiyə lüğəti
+movzu_hovuzu = {
+    "Riyaziyyat": ["Törəmə və İnteqral tətbiqləri", "Ehtimal nəzəriyyəsi", "Xətti tənliklər sistemi", "Triqonometriya"],
+    "Proqramlaşdırma (Python)": ["List Comprehensions və Lamda", "OOP (Obyektyönümlü proqramlaşdırma)", "Streamlit ilə Web API", "Pandas ilə Data Analizi"],
+    "Xarici Dil (İngilis dili)": ["Phrasal Verbs (Frazeoloji fellər)", "Advanced Speaking Practice", "Writing (Essay strukturu)", "Listening - TED Talks"],
+    "Data Elmi": ["Xətti Reqressiya modeli", "Data Təmizləmə (Data Cleaning)", "Matplotlib ilə vizuallaşdırma", "SQL sorğuları"]
+}
 
-if st.sidebar.button("✨ Motivasiya Sözü Al / Get Motivation"):
-    st.sidebar.info(random.choice(motivations))
+# Sol menyu (Sidebar) - İstifadəçi məlumatları daxil edir
+st.sidebar.header("🎯 Planlaşdırma Ayarları")
+ad = st.sidebar.text_input("Adınızı daxil edin:", placeholder="Məsələn: Əli")
+sahə = st.sidebar.selectbox("Öyrənmək istədiyiniz sahə:", list(movzu_hovuzu.keys()))
+gunler = st.sidebar.slider("Həftədə neçə gün oxuya bilərsiniz?", 1, 7, 3)
+saat = st.sidebar.number_input("Günlük neçə saat ayıra bilərsiniz?", min_value=1, max_value=12, value=2)
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("☕ Layihəyə Dəstək Ol / Support Us")
-st.sidebar.write("Bu tətbiq tələbələr üçün hazırlanıb. Müəllifə kiçik bir dəstək olmaq istərdiniz?")
-st.sidebar.markdown("[📊 Buy Me a Coffee (Mənə Qəhvə Ismarla)](https://www.buymeacoffee.com)") 
+# Əsas interfeys elementləri
+col1, col2 = st.columns([2, 1])
 
-# Sessiya yaddaşı
-if "my_subjects" not in st.session_state:
-    st.session_state.my_subjects = {
-        "Riyaziyyat (Mathematics)": {"difficulty": 5, "tips": "Törəmə, İnteqral və Funksiyaları təkrarla! 📐 / Review Derivatives!"},
-        "İngilis dili (English)": {"difficulty": 4, "tips": "Advanced Vocabulary və Oxu strategiyaları! 📚 / Focus on Vocabulary!"},
-        "Rus dili (Russian)": {"difficulty": 4, "tips": "Qrammatika qaydalarına və cümlə strukturuna diqqət et! ✍️"}
-    }
-
-# Fənn əlavə etmə
-st.subheader("➕ Yeni Fənn Əlavə Et / Add New Subject")
-new_sub = st.text_input("Fənnin adı (Subject Name):")
-new_diff = st.slider("Bu fənnin çətinliyi? (Difficulty):", 1, 5, 3)
-
-if st.button("➕ Siyahıya Əlavə Et / Add to List"):
-    if new_sub and new_sub not in st.session_state.my_subjects:
-        # Çətinlik dərəcəsinə görə dinamik məsləhət generatoru
-        if new_diff >= 4:
-            tip_text = "Bu çətin fəndir! Mövzuları xırda hissələrə böl və bol test işlə. 🧠"
-        else:
-            tip_text = "Nisbətən rahat fəndir, sürətli təkrar və qeydlər kifayət edər. 📑"
-            
-        st.session_state.my_subjects[new_sub] = {"difficulty": new_diff, "tips": tip_text}
-        st.rerun()  # Səhifəni yeniləyir ki, dərhal siyahıda görünsün
-    elif new_sub in st.session_state.my_subjects:
-        st.warning("Bu fənn artıq siyahıda var!")
-
-st.markdown("---")
-
-# Fənləri göstərmək və Silmək
-st.subheader("📚 Mövcud Fənləriniz və Kritik Tövsiyələr / Current Subjects")
-
-# Silinəcək fənni izləmək üçün siyahı yaradırıq
-to_delete = None
-
-for sub, info in st.session_state.my_subjects.items():
-    col1, col2, col3 = st.columns([2, 3, 1])
-    with col1:
-        st.warning(f"📘 **{sub}** (Çətinlik: {info['difficulty']}/5)")
-    with col2:
-        st.caption(f"💡 *Tövsiyə:* {info['tips']}")
-    with col3:
-        # Hər fənn üçün unikal düymə açarı (key) yaradırıq
-        if st.button("🗑️ Sil", key=f"del_{sub}"):
-            to_delete = sub
-
-# Əgər silmə düyməsi basılıbsa, elementi silib səhifəni yeniləyirik
-if to_delete:
-    del st.session_state.my_subjects[to_delete]
-    st.rerun()
-
-st.markdown("---")
-
-# Hesablama hissəsi
-if st.button("🚀 Yeni Proqramı Hesabla / Calculate Schedule"):
-    if not st.session_state.my_subjects:
-        st.error("⚠️ Siyahıda heç bir fənn yoxdur! Zəhmət olmasa əvvəlcə fənn əlavə edin.")
-    else:
-        st.subheader("📊 Sizin Üçün Detallı Günlük Plan / Your Plan:")
-        total_difficulty = sum(info["difficulty"] for info in st.session_state.my_subjects.values())
+with col1:
+    st.write(f"### 👋 Xoş gəldin, **{ad if ad else 'Tələbə'}**!")
+    st.info("Aşağıdakı düyməyə klikləyərək AI tərəfindən optimallaşdırılmış fərdi dərs planını əldə edə bilərsən.")
+    
+    # Plan yaratma düyməsi
+    if st.button("📅 Dinamik Plan Yarat"):
+        st.success(f"🎉 **{sahə}** sahəsi üçün fərdi tədris planınız hazırdır!")
         
-        for sub, info in st.session_state.my_subjects.items():
-            sub_hours = (info["difficulty"] / total_difficulty) * daily_hours
-            st.write(f"**{sub}** üçün ayrılan vaxt: **{sub_hours:.1f} saat/hours**")
-            st.progress(min(sub_hours / daily_hours, 1.0))
+        # Seçilmiş sahəyə uyğun mövzuları qarışdırıb təqdim edirik
+        secilmis_movzular = movzu_hovuzu[sahə]
+        
+        # Günlük cədvəl cədvəli yaradılır
+        st.write("#### 🗓️ Həftəlik Təqvim:")
+        for i in range(1, gunler + 1):
+            # Əgər mövzu sayı gün sayından azdırsa, dövrü təkrarlayırıq
+            movzu = secilmis_movzular[(i - 1) % len(secilmis_movzular)]
             
-        st.success(f"🎯 Mükəmməl! {total_days} gün ərzində bu templə hər şeyi tam çatdıracaqsınız!")
+            with st.expander(f"🟢 {i}-ci Gün Planı"):
+                st.write(f"**Öyrəniləcək Mövzu:** {movzu}")
+                st.write(f"**Ayrılan Zaman:** {saat} saat")
+                st.write(f"**Tövsiyə olunan metod:** Pomodoro texnikası ilə {saat * 2} seans ({saat * 2} x 25 dəq).")
+                st.checkbox("Tamamlandı kimi qeyd et", key=f"check_{i}")
+
+with col2:
+    st.write("### ⚡ Günün Motivasiyası")
+    # Təsadüfi motivasiya sözü seçən mexanizm
+    if st.button("🎲 Yeni Motivasiya Sözü"):
+        st.session_state['motivasiya'] = random.choice(motivasiya_sozleri)
+    
+    # İlkin dəyər təyin edilir
+    if 'motivasiya' not in st.session_state:
+        st.session_state['motivasiya'] = motivasiya_sozleri[0]
+        
+    st.warning(st.session_state['motivasiya'])
+    
+    # Faydalı qeydlər bölməsi
+    st.write("---")
+    st.write("### 📝 Qeyd Dəftəri")
+    qeyd = st.text_area("Öyrənərkən vacib qeydlərini bura yaz:", placeholder="Məsələn: Sabah mütləq OOP mövzusunu təkrar etməliyəm...")
+    if qeyd:
+        st.toast("Qeydiniz yadda saxlanıldı (Səhifə yenilənənə qədər)!", icon="💾")
