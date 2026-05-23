@@ -1,103 +1,141 @@
-import random
 import streamlit as st
-import streamlit.components.v1 as components
+from duckduckgo_search import DDGS
 
-# 1. SƏHİFƏ KONFİQURASİYASI (Mütləq ən birinci gəlməlidir)
-st.set_page_config(page_title="EduAI Ultra Global Scheduler", page_icon="🤖", layout="wide")
+# 1. Səhifə Ayarları
+st.set_page_config(page_title="EduAI Pro", page_icon="🎓", layout="wide")
 
-# 2. SÜNİ İNTELLEKT QLOVAL TƏRCÜMƏ SİSTEMİ (Google Translate)
-html_kodu = """
-<div style="text-align: right; padding: 10px;">
-    <div id="google_translate_element"></div>
-</div>
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({
-    pageLanguage: 'az', 
-    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-  }, 'google_translate_element');
-}
-</script>
-<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-"""
+# 2. İstifadəçi Bazası (Sessiyada saxlanılır ki, VIP statusu dinamik dəyişə bilsin)
+if 'users' not in st.session_state:
+    st.session_state['users'] = {
+        'ayse': {'name': 'Aysel', 'password': '123', 'is_vip': True},
+        'user': {'name': 'Tələbə', 'password': '123', 'is_vip': False}
+    }
 
-# Tərcümə düyməsini ekrana buraxırıq
-components.html(html_kodu, height=60, scrolling=False)
+# Login funksiyası
+def login():
+    st.sidebar.title("🔑 Giriş Paneli")
+    username = st.sidebar.text_input("İstifadəçi adı")
+    password = st.sidebar.text_input("Şifrə", type="password")
+    if st.sidebar.button("Daxil Ol", use_container_width=True):
+        if username in st.session_state['users'] and st.session_state['users'][username]['password'] == password:
+            st.session_state['logged_in'] = True
+            st.session_state['username'] = username
+            st.rerun()
+        else:
+            st.sidebar.error("Yanlış istifadəçi adı və ya şifrə!")
 
-
-# 3. SƏHİFƏNİN ƏSAS BAŞLIQLARI
-st.title("🤖 EduAI Ağıllı Tədris Asistanı / Smart Study Assistant")
-st.subheader("Dinamik planlaşdırma, mövzu tövsiyələri və motivasiya bir arada! 🚀")
-
-st.write("---")
-
-# 4. DATA VƏ MƏNTİQ SİSTEMİ (Sənin kodunun ardı)
-
-# Motivasiya sözləri bazası
-motivasiya_sozleri = [
-    "Uğur, hər gün təkrarlanan kiçik səylərin cəmidir! 💪",
-    "Başlamaq üçün mükəmməl olmaq məcburiyyətində deyilsən, amma mükəmməl olmaq üçün başlamalısan! ✨",
-    "Dahilik 1% istedad, 99% tərləməkdir. – Tomas Edison 💡",
-    "Bu gün atdığın kiçik bir addım, sabahkı böyük uğurunun təməlidir! 🔥",
-    "Çətinliklər səni qorxutmasın, onlar səni daha da gücləndirir! 🌟"
-]
-
-# Mövzular üzrə tövsiyə lüğəti
-movzu_hovuzu = {
-    "Riyaziyyat": ["Törəmə və İnteqral tətbiqləri", "Ehtimal nəzəriyyəsi", "Xətti tənliklər sistemi", "Triqonometriya"],
-    "Proqramlaşdırma (Python)": ["List Comprehensions və Lamda", "OOP (Obyektyönümlü proqramlaşdırma)", "Streamlit ilə Web API", "Pandas ilə Data Analizi"],
-    "Xarici Dil (İngilis dili)": ["Phrasal Verbs (Frazeoloji fellər)", "Advanced Speaking Practice", "Writing (Essay strukturu)", "Listening - TED Talks"],
-    "Data Elmi": ["Xətti Reqressiya modeli", "Data Təmizləmə (Data Cleaning)", "Matplotlib ilə vizuallaşdırma", "SQL sorğuları"]
-}
-
-# Sol menyu (Sidebar) - İstifadəçi məlumatları daxil edir
-st.sidebar.header("🎯 Planlaşdırma Ayarları")
-ad = st.sidebar.text_input("Adınızı daxil edin:", placeholder="Məsələn: Əli")
-sahə = st.sidebar.selectbox("Öyrənmək istədiyiniz sahə:", list(movzu_hovuzu.keys()))
-gunler = st.sidebar.slider("Həftədə neçə gün oxuya bilərsiniz?", 1, 7, 3)
-saat = st.sidebar.number_input("Günlük neçə saat ayıra bilərsiniz?", min_value=1, max_value=12, value=2)
-
-# Əsas interfeys elementləri
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.write(f"### 👋 Xoş gəldin, **{ad if ad else 'Tələbə'}**!")
-    st.info("Aşağıdakı düyməyə klikləyərək AI tərəfindən optimallaşdırılmış fərdi dərs planını əldə edə bilərsən.")
+# 3. Əsas Proqram Məntiqi
+if 'logged_in' not in st.session_state:
+    login()
+    st.title("🎓 EduAI Pro-ya Xoş Gəlmisiniz!")
+    st.info("💡 Davam etmək üçün sol paneldən daxil olun.")
+    st.write("Sınaq üçün VIP: `ayse` (şifrə: 123) və ya Standart: `user` (şifrə: 123) istifadə edə bilərsiniz.")
+else:
+    # Cari istifadəçinin məlumatları
+    username = st.session_state['username']
+    current_user = st.session_state['users'][username]
+    is_vip = current_user.get('is_vip', False)
     
-    # Plan yaratma düyməsi
-    if st.button("📅 Dinamik Plan Yarat"):
-        st.success(f"🎉 **{sahə}** sahəsi üçün fərdi tədris planınız hazırdır!")
+    # Sol Panel (Sidebar) İdarəetməsi
+    st.sidebar.title(f"👤 {current_user['name']}")
+    
+    # --- VIP Paneli və Aktivləşdirmə Sistemi ---
+    if is_vip:
+        st.sidebar.success("⭐ VIP Üzv statusu aktivdir")
+    else:
+        st.sidebar.info("📉 Standart Hesab")
+        st.sidebar.subheader("VIP Olmaq")
+        st.sidebar.write("Ödəniş etmək üçün bura klikləyin: [Ödəniş Linki](https://example.com)")
         
-        # Seçilmiş sahəyə uyğun mövzuları qarışdırıb təqdim edirik
-        secilmis_movzular = movzu_hovuzu[sahə]
+        vip_kod_input = st.sidebar.text_input("VIP Kodunuzu daxil edin:", type="password")
+        if st.sidebar.button("Aktivləşdir", use_container_width=True):
+            # Kod təhlükəsizliyi üçün real layihədə st.secrets daxilində saxlanılması məsləhətdir
+            if vip_kod_input == "GIZLIN_VIP_KOD":
+                st.session_state['users'][username]['is_vip'] = True
+                st.sidebar.success("Təbriklər! VIP statusunuz aktivləşdirildi.")
+                st.rerun()
+            else:
+                st.sidebar.error("Yanlış kod daxil edilib!")
+                
+    st.sidebar.divider()
+    lang = st.sidebar.selectbox("Dil / Language", ["Azərbaycan", "English"])
+    
+    if st.sidebar.button("🚪 Çıxış", use_container_width=True):
+        del st.session_state['logged_in']
+        del st.session_state['username']
+        st.rerun()
         
-        # Günlük cədvəl cədvəli yaradılır
-        st.write("#### 🗓️ Həftəlik Təqvim:")
-        for i in range(1, gunler + 1):
-            # Əgər mövzu sayı gün sayından azdırsa, dövrü təkrarlayırıq
-            movzu = secilmis_movzular[(i - 1) % len(secilmis_movzular)]
-            
-            with st.expander(f"🟢 {i}-ci Gün Planı"):
-                st.write(f"**Öyrəniləcək Mövzu:** {movzu}")
-                st.write(f"**Ayrılan Zaman:** {saat} saat")
-                st.write(f"**Tövsiyə olunan metod:** Pomodoro texnikası ilə {saat * 2} seans ({saat * 2} x 25 dəq).")
-                st.checkbox("Tamamlandı kimi qeyd et", key=f"check_{i}")
+    # --- Əsas Səhifə Kontenti ---
+    st.title(f"🎓 EduAI Pro — Öyrənmə Platforması")
+    
+    options = [
+        "Riyaziyyat", "Azərbaycan dili", "Ədəbiyyat", "Fizika", "Kimya", 
+        "Biologiya", "Tarix", "Coğrafiya", "İngilis dili", "İnformatika",
+        "Proqramlaşdırma (Python/Java/C++)", "Data Elmi", "Fəlsəfə", "Astronomiya"
+    ]
+    subject = st.selectbox("Öyrənmək istədiyiniz sahəni seçin:", options)
 
-with col2:
-    st.write("### ⚡ Günün Motivasiyası")
-    # Təsadüfi motivasiya sözü seçən mexanizm
-    if st.button("🎲 Yeni Motivasiya Sözü"):
-        st.session_state['motivasiya'] = random.choice(motivasiya_sozleri)
+    # Çoxdilli Mətn Lüğəti
+    texts = {
+        "Azərbaycan": {
+            "button": "Plan Hazırla 🚀", 
+            "loading": "Dərin məlumatlar toplanır və analiz edilir...", 
+            "header": "Haqqında Ətraflı Tədris Materialı",
+            "vip_text": "💎 VIP Eksklüziv: Sizin üçün internetdən çoxşaxəli və dərin metodoloji təhlil toplandı."
+        },
+        "English": {
+            "button": "Generate Plan 🚀", 
+            "loading": "Fetching and analyzing deep insights...", 
+            "header": "Detailed Educational Material",
+            "vip_text": "💎 VIP Exclusive: Deep methodological analysis and multiple sources gathered for you."
+        }
+    }
+
+    # "Plan Hazırla" düyməsi basıldıqda
+    if st.button(texts[lang]["button"], type="primary"):
+        with st.spinner(texts[lang]["loading"]):
+            try:
+                with DDGS() as ddgs:
+                    # VIP statusuna görə axtarış həcmi dəyişir
+                    max_res = 3 if is_vip else 1
+                    sorgu = f"{subject} fənni üzrə geniş akademik dərslər" if is_vip else f"{subject} haqqında qısa məlumat"
+                    
+                    results = list(ddgs.text(sorgu, max_results=max_res))
+                    
+                    if results:
+                        st.subheader(f"📖 {subject} - {texts[lang]['header']}")
+                        st.divider()
+                        
+                        # Nəticələrin ekrana çıxarılması
+                        for idx, res in enumerate(results):
+                            if is_vip:
+                                with st.expander(f"📚 Mənbə {idx+1}: {res.get('title', 'Tədris Materialı')}", expanded=(idx==0)):
+                                    st.write(res.get('body', ''))
+                                    st.caption(f"🔗 [Mənbəyə keçid]({res.get('href', '#')})")
+                            else:
+                                st.write(res.get('body', ''))
+                                st.caption(f"🔗 [Mənbəyə keçid]({res.get('href', '#')})")
+                        
+                        if is_vip:
+                            st.info(texts[lang]["vip_text"])
+                    else:
+                        st.warning("Təəssüf ki, resurs tapılmadı. Yenidən yoxlayın.")
+            except Exception:
+                st.error("Axtarış zamanı bir xəta baş verdi.")
+
+    # Tədris Metodları Bölməsi
+    st.divider()
+    st.subheader("🎯 Effektiv Tədris Metodları")
     
-    # İlkin dəyər təyin edilir
-    if 'motivasiya' not in st.session_state:
-        st.session_state['motivasiya'] = motivasiya_sozleri[0]
-        
-    st.warning(st.session_state['motivasiya'])
-    
-    # Faydalı qeydlər bölməsi
-    st.write("---")
-    st.write("### 📝 Qeyd Dəftəri")
-    qeyd = st.text_area("Öyrənərkən vacib qeydlərini bura yaz:", placeholder="Məsələn: Sabah mütləq OOP mövzusunu təkrar etməliyəm...")
-    if qeyd:
-        st.toast("Qeydiniz yadda saxlanıldı (Səhifə yenilənənə qədər)!", icon="💾")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        ### 💡 Feynman Texnikası
+        Bir mövunu öyrənməyin ən yaxşı yolu onu **sadə dillə başqasına izah etməkdir**. 
+        Anlamadığınız hissələri qeyd edin və yenidən mənbəyə qayıdın.
+        """)
+    with col2:
+        st.markdown("""
+        ### ⏳ Aralıqlı Təkrar (Spaced Repetition)
+        Məlumatı uzunmüddətli yaddaşda saxlamaq üçün onu müəyyən fasilələrlə (1 gün, 3 gün, 7 gün sonra) yenidən təkrar edin.
+        """)
