@@ -139,14 +139,13 @@ else:
         ### ⏳ Aralıqlı Təkrar (Spaced Repetition)
         Məlumatı uzunmüddətli yaddaşda saxlamaq üçün onu müəyyən fasilələrlə (1 gün, 3 gün, 7 gün sonra) yenidən təkrar edin.
         """)
-
 import streamlit as st
 from duckduckgo_search import DDGS
 
 # 1. Səhifə Ayarları
 st.set_page_config(page_title="EduAI Pro", page_icon="🎓", layout="centered")
 
-# 2. İstifadəçi Bazası (Session-da saxlanılır)
+# 2. İstifadəçi Bazası (Session State)
 if 'users' not in st.session_state:
     st.session_state['users'] = {'ayse': {'password': '123'}, 'user': {'password': '123'}}
 if 'logged_in' not in st.session_state:
@@ -154,74 +153,79 @@ if 'logged_in' not in st.session_state:
 
 # 3. Funksiyalar
 def login():
-    st.sidebar.title("🔑 Giriş Paneli")
+    st.sidebar.subheader("🔑 Giriş Paneli")
     username = st.sidebar.text_input("İstifadəçi adı", key="login_user")
     password = st.sidebar.text_input("Şifrə", type="password", key="login_pass")
     
-    if st.sidebar.button("Daxil Ol"):
+    if st.sidebar.button("Daxil Ol", key="login_btn"):
         if username in st.session_state['users'] and st.session_state['users'][username]['password'] == password:
             st.session_state['logged_in'] = True
             st.session_state['username'] = username
+            st.success(f"Xoş gəldiniz, {username}!")
             st.rerun()
         else:
             st.sidebar.error("Yanlış ad və ya şifrə!")
 
 def signup():
-    st.sidebar.title("📝 Qeydiyyat")
+    st.sidebar.subheader("📝 Qeydiyyat")
     new_user = st.sidebar.text_input("Yeni istifadəçi adı", key="signup_user")
     new_pass = st.sidebar.text_input("Yeni şifrə", type="password", key="signup_pass")
     
-    if st.sidebar.button("Qeydiyyatdan keç"):
+    if st.sidebar.button("Qeydiyyatdan keç", key="signup_btn"):
         if not new_user or not new_pass:
-            st.sidebar.warning("Zəhmət olmasa bütün xanaları doldurun.")
+            st.sidebar.error("İstifadəçi adı və şifrə boş ola bilməz!")
         elif new_user not in st.session_state['users']:
             st.session_state['users'][new_user] = {'password': new_pass}
             st.sidebar.success("Hesab yaradıldı! İndi daxil ola bilərsiniz.")
         else:
             st.sidebar.warning("Bu istifadəçi artıq mövcuddur.")
 
-# 4. Əsas Proqram
+# 4. Əsas Proqram Məntiqi
 if not st.session_state['logged_in']:
+    st.title("EduAI Pro-ya Xoş Gəlmisiniz! 👋")
+    st.info("Zəhmət olmasa, davam etmək üçün sol paneldən daxil olun və ya qeydiyyatdan keçin.")
+    
     menu = st.sidebar.radio("Menyu", ["Daxil ol", "Qeydiyyatdan keç"])
     if menu == "Daxil ol": 
         login()
     else: 
         signup()
-    
-    # Giriş etməyən istifadəçilər üçün qarşılama ekranı
-    st.title("EduAI Pro-ya Xoş Gəlmisiniz! 👋")
-    st.info("Platformanın imkanlarından yararlanmaq üçün soldakı paneldən daxil olun və ya qeydiyyatdan keçin.")
 else:
-    # Giriş etmiş istifadəçinin interfeysi
-    st.title(f"EduAI Pro — Öyrənmə Platforması 🚀")
-    st.subheader(f"Xoş gördük, {st.session_state['username']}!")
+    # İstifadəçi daxil olduqdan sonra görünəcək interfeys
+    username = st.session_state.get('username', 'İstifadəçi')
     
+    # Sol panel idarəetməsi
+    st.sidebar.title("EduAI Pro 🎓")
+    st.sidebar.write(f"İstifadəçi: **{username}**")
+    
+    if st.sidebar.button("Çıxış", key="logout_btn"):
+        st.session_state['logged_in'] = False
+        st.session_state['username'] = None
+        st.rerun()
+        
+    # Əsas Səhifə
+    st.title("EduAI Pro — Öyrənmə Platforması")
     subject = st.selectbox("Öyrənmək istədiyiniz sahəni seçin:", ["Riyaziyyat", "Fizika", "Kimya", "Tarix"])
     
-    if st.button("Plan Hazırla ✨"):
+    if st.button("Plan Hazırla 🚀", type="primary"):
         try:
-            with st.spinner("Sizin üçün ən yaxşı resurslar araşdırılır..."):
-                # DuckDuckGo axtarışı
+            with st.spinner("Süni zəka resursları və planı axtarır..."):
+                # DDGS().text üçün yeni sintaksis modifikasiyası
                 with DDGS() as ddgs:
-                    results = list(ddgs.text(f"{subject} dərsləri üçün tədris planı və resurslar", max_results=3))
+                    search_results = ddgs.text(
+                        keywords=f"{subject} dərsləri üçün detallı tədris planı və resurslar", 
+                        max_results=3
+                    )
+                    results = list(search_results) # Generatordan siyahıya çevirmə
                 
                 if results:
-                    st.success(f"**{subject}** sahəsi üzrə tapılan resurslar:")
-                    st.write("---")
+                    st.subheader(f"📚 {subject} üçün Tapılan Resurslar:")
                     for i, r in enumerate(results, 1):
-                        st.markdown(f"### {i}. {r['title']}")
-                        st.markdown(f"[Resursa keçid edin]({r['href']})")
-                        if 'body' in r:
-                            st.caption(r['body'])
-                        st.write("---")
+                        with st.expander(f"{i}. {r['title']}"):
+                            st.write(r['body']) # Qısa məzmun
+                            st.write(f"[Keçid linki]({r['href']})")
                 else:
                     st.warning("Təəssüf ki, uyğun resurs tapılmadı.")
                     
         except Exception as e:
-            st.error("Hazırda internet axtarışı zamanı xəta baş verdi. Zəhmət olmasa bir az sonra yenidən cəhd edin.")
-
-    # Çıxış düyməsi
-    if st.sidebar.button("Çıxış Paneli 🚪"):
-        st.session_state['logged_in'] = False
-        st.session_state.pop('username', None)
-        st.rerun()
+            st.error("Hazırda axtarış sistemində texniki xəta baş verdi. Zəhmət olmasa bir az sonra yenidən cəhd edin.")
