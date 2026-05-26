@@ -6,7 +6,7 @@ st.set_page_config(page_title="EduAI Pro", page_icon="🎓", layout="wide")
 
 # Sessiya məlumatlarının yoxlanılması
 if 'users' not in st.session_state:
-    st.session_state['users'] = {'ayse': {'password': '123'}, 'user': {'password': '123'}}
+    st.session_state['users'] = {'aysel': {'password': 'aysel123'}, 'user': {'password': '123'}}
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
@@ -46,7 +46,7 @@ def main_page():
     # Əsas məzmun
     st.title("EduAI Pro — Öyrənmə Platforması")
     
-    subject = st.selectbox("Sahəni seçin:", ["Riyaziyyat", "Fizika", "Kimya", "Tarix"])
+    subject = st.selectbox("Sahəni seçin:", ["Riyaziyyat", "Fizika", "Kimya", "Tarix", "Biologiya", "Ədəbiyyat", "Ana dil", "İngilis dili", "İnformatika", "Python", "Data", "Elmləri Digər"])
     
     if st.button("Plan Hazırla 🚀"):
         st.write(f"### {subject} üçün fərdi tədris planı hazırlanır...")
