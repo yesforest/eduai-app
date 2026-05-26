@@ -1,4 +1,4 @@
-Import streamlit as st
+import streamlit as st
 from duckduckgo_search import DDGS
 
 st.set_page_config(page_title="EduAI Pro", page_icon="🎓")
